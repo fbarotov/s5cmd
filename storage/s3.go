@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -152,6 +153,8 @@ func (s *S3) listObjectsV2(ctx context.Context, url *url.URL) <-chan *Object {
 
 	objCh := make(chan *Object)
 
+	snapshot := time.Now()
+
 	go func() {
 		defer close(objCh)
 		objectFound := false
@@ -188,6 +191,11 @@ func (s *S3) listObjectsV2(ctx context.Context, url *url.URL) <-chan *Object {
 				newurl.Path = aws.StringValue(c.Key)
 				etag := aws.StringValue(c.ETag)
 				mod := aws.TimeValue(c.LastModified)
+
+				if mod.After(snapshot) {
+					continue
+				}
+
 				objCh <- &Object{
 					URL:          newurl,
 					Etag:         strings.Trim(etag, `"`),
