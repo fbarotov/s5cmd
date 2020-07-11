@@ -193,6 +193,7 @@ func (s *S3) listObjectsV2(ctx context.Context, url *url.URL) <-chan *Object {
 				mod := aws.TimeValue(c.LastModified)
 
 				if mod.Unix() > snapshotUx {
+					objectFound = true
 					continue
 				}
 
