@@ -153,11 +153,11 @@ func (s *S3) listObjectsV2(ctx context.Context, url *url.URL) <-chan *Object {
 
 	objCh := make(chan *Object)
 
-	snapshot := time.Now()
-
 	go func() {
 		defer close(objCh)
 		objectFound := false
+
+		snapshotUx := time.Now().Unix()
 
 		err := s.api.ListObjectsV2PagesWithContext(ctx, &listInput, func(p *s3.ListObjectsV2Output, lastPage bool) bool {
 			for _, c := range p.CommonPrefixes {
@@ -192,7 +192,7 @@ func (s *S3) listObjectsV2(ctx context.Context, url *url.URL) <-chan *Object {
 				etag := aws.StringValue(c.ETag)
 				mod := aws.TimeValue(c.LastModified)
 
-				if mod.After(snapshot) {
+				if mod.Unix() > snapshotUx {
 					continue
 				}
 
